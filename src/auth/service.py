@@ -2,7 +2,11 @@ from .models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from .schemas import UserCreateModel
-from .utils import generate_password_hash as hash_password
+from .utils import generate_password_hash as hash_password, verify_password, create_acess_token
+from src.config import Config
+from fastapi import HTTPException, status
+from datetime import timedelta
+from fastapi.responses import JSONResponse
 
 
 class UserService:
@@ -29,7 +33,53 @@ class UserService:
         session.add(new_user)
         await session.commit()  
 
-        return new_user
+        return new_user  
+    async def login_user(self, email:str,password:str,session:AsyncSession):
+        user = await self.get_user_by_email(email,session)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password."
+            )
+
+        password_valid = verify_password(password,user.password_hash)
+        if not password_valid:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid email or password."
+            )
+
+        access_token = create_acess_token(
+            user_data = {
+                'email': user.email,
+                'user_uid': str(user.id),
+                'username': user.username
+            }
+        )
+        refresh_token = create_acess_token(
+            user_data = {
+                'email': user.email,
+                'user_uid': str(user.id)
+                },
+            refresh=True,
+            expiry = timedelta(days=Config.REFRESH_TOKRN_EXPIRE_DAYS)
+        )
+
+        return  JSONResponse(
+            content={
+                'message': 'Login successful',
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                "user": {
+                    "email": user.email,
+                    "uid": str(user.id),
+                    "username": user.username
+                }
+            }
+        )
+
+
+
 
 
 

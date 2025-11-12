@@ -6,6 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
 
     DATABASE_URL: str
+    JWT_SECRET_KEY: str
+    ALGORITHM: str
+    REFRESH_TOKRN_EXPIRE_DAYS: int
 
     model_config = SettingsConfigDict(
         # Load the env file located alongside this module
