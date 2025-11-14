@@ -7,7 +7,7 @@ from .utils import create_access_token, decode_access_token
 from datetime import timedelta, datetime
 from fastapi.responses import JSONResponse
 from .dependencies import RefreshTokenBearer, AccessTokenBearer
-
+from src.db.redis import add_jti_to_blocklist
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -61,8 +61,19 @@ async def get_new_access_token(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Refresh token has expired, please login again."
     )
-    
-        
+
+@auth_router.post("/logout")
+async def logout_user(
+    token_details: dict = Depends(AccessTokenBearer()),
+) -> JSONResponse:
+    jti = token_details.get("jti")
+    await add_jti_to_blocklist(jti)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"message": "Successfully logged out"}
+    )
+
+      
 
 
 

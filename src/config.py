@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     ALGORITHM: str
     REFRESH_TOKRN_EXPIRE_DAYS: int
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
 
     model_config = SettingsConfigDict(
         # Load the env file located alongside this module
