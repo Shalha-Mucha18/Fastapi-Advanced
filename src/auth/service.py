@@ -2,7 +2,7 @@ from .models import User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from .schemas import UserCreateModel
-from .utils import generate_password_hash as hash_password, verify_password, create_acess_token
+from .utils import generate_password_hash as hash_password, verify_password, create_access_token
 from src.config import Config
 from fastapi import HTTPException, status
 from datetime import timedelta
@@ -49,14 +49,14 @@ class UserService:
                 detail="Invalid email or password."
             )
 
-        access_token = create_acess_token(
+        access_token = create_access_token(
             user_data = {
                 'email': user.email,
                 'user_uid': str(user.id),
                 'username': user.username
             }
         )
-        refresh_token = create_acess_token(
+        refresh_token = create_access_token(
             user_data = {
                 'email': user.email,
                 'user_uid': str(user.id)

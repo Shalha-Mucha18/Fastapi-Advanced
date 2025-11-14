@@ -1,5 +1,6 @@
 from passlib.context import CryptContext
 import jwt
+from fastapi import HTTPException, status
 from src.config import Config
 import uuid
 from datetime import datetime, timedelta
@@ -14,7 +15,11 @@ def generate_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_context.verify(plain_password, hashed_password)
 
-def  create_acess_token(user_data:dict, expiry:timedelta = None,refresh:bool = False) -> str:
+def create_access_token(
+    user_data: dict,
+    expiry: timedelta | None = None,
+    refresh: bool = False,
+) -> str:
 
     payload = {}
     payload["user"] = user_data
@@ -37,8 +42,12 @@ def decode_access_token(token:str) -> dict:
         )
         return payload
     except jwt.ExpiredSignatureError:
-        raise Exception("Token has expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+        )
     except jwt.InvalidTokenError:
-        raise Exception("Invalid token")    
-
-
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )

@@ -3,13 +3,15 @@ from  .schemas import UserCreateModel, UserModel, UserLoginModel
 from .service import UserService
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
-from .utils import create_acess_token, decode_access_token
-from datetime import timedelta
+from .utils import create_access_token, decode_access_token
+from datetime import timedelta, datetime
 from fastapi.responses import JSONResponse
+from .dependencies import RefreshTokenBearer, AccessTokenBearer
 
 
 auth_router = APIRouter()
 user_service = UserService()
+access_token_bearer = AccessTokenBearer()
 
 
 @auth_router.post("/signup",response_model=UserModel,status_code=status.HTTP_201_CREATED)
@@ -39,8 +41,28 @@ async def login_user(
     
     return await user_service.login_user(email, password, session)
 
+@auth_router.get("/refresh-token")
+async def get_new_access_token(
+    token_details: dict = Depends(RefreshTokenBearer()),
+) -> JSONResponse:
 
+    expiry_duration = token_details.get("exp")
+
+    if datetime.fromtimestamp(expiry_duration) > datetime.now():
+        new_access_token = create_access_token(
+            user_data=token_details["user"]
+        )
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"access_token": new_access_token}
+        )
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Refresh token has expired, please login again."
+    )
     
+        
 
 
 
